@@ -34,7 +34,7 @@ def test_normal(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr('subprocess.run', mock_run)
     juju = jubilant.Juju()
 
-    secret_uri = juju.add_secret(
+    secret_uri = juju.secret(
         'sec1', {'username': 'usr', 'password': 'hunter2'}, info='A description.'
     )
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import functools
 import json
 import logging
@@ -11,6 +12,7 @@ import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
 from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
@@ -55,6 +57,31 @@ class SecretURI(str):
             return self[len('secret:') :]
         else:
             return str(self)
+
+
+@dataclass
+class RedactedSecret:
+    uri: SecretURI
+    name: str | None
+    owner: str
+    description: str
+    rotation: str | Literal['never']
+    revision: int
+    created: datetime.datetime
+    updated: datetime.datetime
+
+
+@dataclass
+class RevealedSecret:
+    uri: SecretURI
+    revision: int
+    checksum: str
+    owner: str
+    description: str
+    name: str | None
+    created: datetime.datetime
+    updated: datetime.datetime
+    content: dict[str, str]
 
 
 ConfigValue = Union[bool, int, float, str, SecretURI]
@@ -143,33 +170,6 @@ class Juju:
 
         self.cli(*args, include_model=False)
         self.model = model
-
-    def add_secret(
-        self,
-        name: str,
-        content: Mapping[str, str],
-        *,
-        info: str | None = None,
-    ) -> SecretURI:
-        """Add a new named secret and returns its secret URI.
-
-        Args:
-            name: Name for the secret.
-            content: Key-value pairs that represent the secret content, for example
-                ``{'password': 'hunter2'}``.
-            info: Optional description for the secret.
-        """
-        args = ['add-secret', name]
-        if info is not None:
-            args.extend(['--info', info])
-
-        with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
-            _yaml.safe_dump(content, file)
-            file.flush()
-            args.extend(['--file', file.name])
-            output = self.cli(*args)
-
-        return SecretURI(output.strip())
 
     def add_unit(
         self,
@@ -836,6 +836,124 @@ class Juju:
         args.append(str(destination))
 
         self.cli(*args)
+
+    @overload
+    def secret(
+        self, *, label: Literal[None] = None, uri: Literal[None] = None
+    ) -> Iterable[RedactedSecret]: ...
+
+    @overload
+    def secret(
+        self, *, label: str | None = None, revision: int | None = None
+    ) -> RevealedSecret: ...
+
+    @overload
+    def secret(
+        self, *, uri: str | SecretURI | None = None, revision: int | None = None
+    ) -> RevealedSecret: ...
+
+    @overload
+    def secret(
+        self,
+        label: str | None,
+        values: Mapping[str, str],
+        *,
+        update: bool = False,
+        revision: int | None = None,
+        info: str | None = None,
+    ) -> SecretURI: ...
+
+    def secret(
+        self,
+        label: str | None = None,
+        values: Mapping[str, str] = {},
+        info: str | None = None,
+        update: bool = False,
+        revision: int | None = None,
+        uri: str | SecretURI | None = None,
+    ) -> Iterable[RedactedSecret] | RevealedSecret | SecretURI:
+        """Get or set any secret in the model.
+
+        If called with only the label argument, get the revealed secret and return it.
+
+        If called with only the label or uri argument, get the revealed secret and return it.
+
+        If called with the *values* and other optional arguments, create the secret.
+        If update is set to true, attempt to update an existing secret instead.
+
+        Examples:
+            juju.secret()
+            juju.secret(label="mysecret")
+            juju.secret(label="secret", {"password": "hunter2"})
+            juju.secret(label="secret", {"password": "hunter2"}, update=True)
+
+        Args:
+            label: Secret label to get or set. This is prioritized over the uri if both are set.
+            uri: Secret URI to get or set.
+            values: Mapping of secret keys to values to set.
+            info: Description of the secret to set.
+            update: When adding a secret, set this to True to update the label/uri instead.
+            revision: Revision number of the secret to get.
+        """
+        if label is None and uri is None:
+            stdout = self.cli('secrets', '--format', 'json')
+            output = json.loads(stdout)
+            return [
+                RedactedSecret(
+                    revision=int(obj['revision']),
+                    uri=SecretURI('secret:' + uri_from_juju),
+                    name=str(obj['label']) if 'label' in obj else None,
+                    owner=str(obj['owner']) if 'owner' in obj else '<model>',
+                    description=str(obj['description']) if 'description' in obj else '',
+                    rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
+                    created=datetime.datetime.fromisoformat(str(obj['created']))
+                    if 'created' in obj
+                    else datetime.datetime.now(),
+                    updated=datetime.datetime.fromisoformat(str(obj['updated']))
+                    if 'updated' in obj
+                    else datetime.datetime.now(),
+                )
+                for uri_from_juju, obj in output.items()
+            ]
+
+        if not values:
+            if label is not None and uri is not None:
+                raise TypeError('cannot specify both label and uri')
+            args = ['get-secret', '--format', 'json']
+            if label is not None:
+                args.extend([label])
+            elif uri is not None:
+                args.extend([str(uri)])
+            if revision is not None:
+                args.extend(['--revision', str(revision)])
+            stdout = self.cli(*args)
+            output = json.loads(stdout)
+            uri_from_juju, obj = next(iter(output.items()))
+            return RevealedSecret(
+                uri=SecretURI('secret:' + uri_from_juju),
+                revision=int(obj['revision']) if 'revision' in obj else 0,
+                checksum=str(obj['checksum']) if 'checksum' in obj else '',
+                owner=str(obj['owner']) if 'owner' in obj else '<model>',
+                description=str(obj['description']) if 'description' in obj else '',
+                name=str(obj['label']) if 'label' in obj else None,
+                created=datetime.datetime.fromisoformat(str(obj['created'])),
+                updated=datetime.datetime.fromisoformat(str(obj['updated'])),
+                content=obj['content'],
+            )
+
+        args = ['add-secret']
+        if update:
+            args = ['update-secret']
+        id = label if label is not None else uri
+        args.extend([str(id)])
+        if info is not None:
+            args.extend(['--info', info])
+        with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
+            _yaml.safe_dump(values, file)
+            file.flush()
+            args.extend(['--file', file.name])
+            stdout = self.cli(*args)
+        return SecretURI(stdout.strip())
 
     def ssh(
         self,
