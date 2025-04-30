@@ -839,12 +839,12 @@ class Juju:
 
     @overload
     def secret(
-        self, *, label: Literal[None] = None, uri: Literal[None] = None
+        self, *, name: Literal[None] = None, uri: Literal[None] = None
     ) -> Iterable[RedactedSecret]: ...
 
     @overload
     def secret(
-        self, *, label: str | None = None, revision: int | None = None
+        self, *, name: str | None = None, revision: int | None = None
     ) -> RevealedSecret: ...
 
     @overload
@@ -855,7 +855,7 @@ class Juju:
     @overload
     def secret(
         self,
-        label: str | None,
+        name: str | None,
         values: Mapping[str, str],
         *,
         update: bool = False,
@@ -865,7 +865,7 @@ class Juju:
 
     def secret(
         self,
-        label: str | None = None,
+        name: str | None = None,
         values: Mapping[str, str] = {},
         info: str | None = None,
         update: bool = False,
@@ -884,8 +884,8 @@ class Juju:
         Examples:
             juju.secret()
             juju.secret(label="mysecret")
-            juju.secret(label="secret", {"password": "hunter2"})
-            juju.secret(label="secret", {"password": "hunter2"}, update=True)
+            juju.secret("secret", {"password": "hunter2"})
+            juju.secret(label="secret", values={"password": "hunter2"}, update=True)
 
         Args:
             label: Secret label to get or set. This is prioritized over the uri if both are set.
@@ -895,14 +895,14 @@ class Juju:
             update: When adding a secret, set this to True to update the label/uri instead.
             revision: Revision number of the secret to get.
         """
-        if label is None and uri is None:
+        if name is None and uri is None:
             stdout = self.cli('secrets', '--format', 'json')
             output = json.loads(stdout)
             return [
                 RedactedSecret(
                     revision=int(obj['revision']),
                     uri=SecretURI('secret:' + uri_from_juju),
-                    name=str(obj['label']) if 'label' in obj else None,
+                    name=str(obj['name']) if 'name' in obj else None,
                     owner=str(obj['owner']) if 'owner' in obj else '<model>',
                     description=str(obj['description']) if 'description' in obj else '',
                     rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
@@ -917,11 +917,11 @@ class Juju:
             ]
 
         if not values:
-            if label is not None and uri is not None:
+            if name is not None and uri is not None:
                 raise TypeError('cannot specify both label and uri')
-            args = ['get-secret', '--format', 'json']
-            if label is not None:
-                args.extend([label])
+            args = ['show-secret','--reveal', '--format', 'json']
+            if name is not None:
+                args.extend([name])
             elif uri is not None:
                 args.extend([str(uri)])
             if revision is not None:
@@ -935,16 +935,16 @@ class Juju:
                 checksum=str(obj['checksum']) if 'checksum' in obj else '',
                 owner=str(obj['owner']) if 'owner' in obj else '<model>',
                 description=str(obj['description']) if 'description' in obj else '',
-                name=str(obj['label']) if 'label' in obj else None,
+                name=str(obj['name']) if 'name' in obj else None,
                 created=datetime.datetime.fromisoformat(str(obj['created'])),
                 updated=datetime.datetime.fromisoformat(str(obj['updated'])),
-                content=obj['content'],
+                content=obj['content']['Data'],
             )
 
         args = ['add-secret']
         if update:
             args = ['update-secret']
-        id = label if label is not None else uri
+        id = name if name is not None else uri
         args.extend([str(id)])
         if info is not None:
             args.extend(['--info', info])

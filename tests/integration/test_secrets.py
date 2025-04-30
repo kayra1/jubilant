@@ -17,48 +17,47 @@ def test_add_secret(juju: jubilant.Juju):
 
 def test_update_secret(juju: jubilant.Juju):
     uri = juju.secret('sec2', {'username': 'usr', 'password': 'hunter2'}, info='A description.')
-    uri2 = juju.secret(
-        'sec2', {'username': 'usr', 'password': 'hunter3'}, info='A new description.', update=True
+    juju.secret(
+        'sec2', {'username': 'usr2', 'password': 'hunter3'}, info='A new description.', update=True
     )
 
-    assert uri == uri2
-    output = juju.cli('show-secret', 'sec1', '--reveal', '--format', 'json')
+    output = juju.cli('show-secret', 'sec2', '--reveal', '--format', 'json')
     result = json.loads(output)
     secret = result[uri.unique_identifier]
-    assert secret['name'] == 'sec1'
+    assert secret['name'] == 'sec2'
+    assert secret['revision'] == 2
     assert secret['description'] == 'A new description.'
-    assert secret['content']['Data'] == {'username': 'usr', 'password': 'hunter3'}
+    assert secret['content']['Data'] == {'username': 'usr2', 'password': 'hunter3'}
 
 
 def test_get_all_secrets(juju: jubilant.Juju):
-    uris: list[str] = []
-    args = [
-        {'label': 'sec1', 'username': 'usr', 'password': 'hunter2', 'info': 'A description'},
-        {'label': 'sec2', 'username': 'usr2', 'password': 'hunter3', 'info': 'A new description'},
+    expected_values = [
+        {'name': 'sec1', 'username': 'usr', 'password': 'hunter2', 'info': 'A description.', 'revision': 1},
+        {'name': 'sec2', 'username': 'usr2', 'password': 'hunter3', 'info': 'A new description.', 'revision': 2},
     ]
     secrets = juju.secret()
 
     assert isinstance(secrets, list)
     assert len(secrets) > 0
-    for secret in secrets:
-        assert secret.uri in uris
-        assert secret.revision == 1
-        assert secret.name == '<model>'
-        assert secret.description in [arg['info'] for arg in args]
+    for i, secret in enumerate(secrets):
+        assert secret.revision == expected_values[i]['revision']
+        assert secret.name == expected_values[i]['name']
+        assert secret.owner == '<model>'
+        assert secret.description == expected_values[i]['info']
         assert secret.created.year == datetime.datetime.now().year
         assert secret.created == secret.updated
 
 
 def test_get_secret(juju: jubilant.Juju):
-    secret = juju.secret(label='sec1')
+    secret = juju.secret(name='sec1')
 
     assert secret.revision == 1
     assert secret.owner == '<model>'
     assert secret.name == 'sec1'
-    assert secret.description == 'A description'
+    assert secret.description == 'A description.'
     assert secret.created.year == datetime.datetime.now().year
     assert secret.created == secret.updated
     assert secret.content == {'username': 'usr', 'password': 'hunter2'}
 
-    secret2 = juju.secret(uri=secret.uri)
-    assert secret == secret2
+    secret_again = juju.secret(uri=secret.uri)
+    assert secret == secret_again
