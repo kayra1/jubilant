@@ -32,8 +32,20 @@ def test_update_secret(juju: jubilant.Juju):
 
 def test_get_all_secrets(juju: jubilant.Juju):
     expected_values = [
-        {'name': 'sec1', 'username': 'usr', 'password': 'hunter2', 'info': 'A description.', 'revision': 1},
-        {'name': 'sec2', 'username': 'usr2', 'password': 'hunter3', 'info': 'A new description.', 'revision': 2},
+        {
+            'name': 'sec1',
+            'username': 'usr',
+            'password': 'hunter2',
+            'info': 'A description.',
+            'revision': 1,
+        },
+        {
+            'name': 'sec2',
+            'username': 'usr2',
+            'password': 'hunter3',
+            'info': 'A new description.',
+            'revision': 2,
+        },
     ]
     secrets = juju.secret()
 

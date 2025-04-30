@@ -874,25 +874,25 @@ class Juju:
     ) -> Iterable[RedactedSecret] | RevealedSecret | SecretURI:
         """Get or set any secret in the model.
 
-        If called with only the label argument, get the revealed secret and return it.
+        If called with only the name argument, get the revealed secret and return it.
 
-        If called with only the label or uri argument, get the revealed secret and return it.
+        If called with only the name or uri argument, get the revealed secret and return it.
 
         If called with the *values* and other optional arguments, create the secret.
         If update is set to true, attempt to update an existing secret instead.
 
         Examples:
             juju.secret()
-            juju.secret(label="mysecret")
+            juju.secret(name="mysecret")
             juju.secret("secret", {"password": "hunter2"})
-            juju.secret(label="secret", values={"password": "hunter2"}, update=True)
+            juju.secret(name="secret", values={"password": "hunter2"}, update=True)
 
         Args:
-            label: Secret label to get or set. This is prioritized over the uri if both are set.
+            name: Secret name to get or set. This is prioritized over the uri if both are set.
             uri: Secret URI to get or set.
             values: Mapping of secret keys to values to set.
             info: Description of the secret to set.
-            update: When adding a secret, set this to True to update the label/uri instead.
+            update: When adding a secret, set this to True to update the name/uri instead.
             revision: Revision number of the secret to get.
         """
         if name is None and uri is None:
@@ -918,8 +918,8 @@ class Juju:
 
         if not values:
             if name is not None and uri is not None:
-                raise TypeError('cannot specify both label and uri')
-            args = ['show-secret','--reveal', '--format', 'json']
+                raise TypeError('cannot specify both name and uri')
+            args = ['show-secret', '--reveal', '--format', 'json']
             if name is not None:
                 args.extend([name])
             elif uri is not None:
