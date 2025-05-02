@@ -5,7 +5,9 @@ import jubilant
 
 
 def test_add_secret(juju: jubilant.Juju):
-    uri = juju.secret('sec1', {'username': 'usr', 'password': 'hunter2'}, info='A description.')
+    uri = juju.add_secret(
+        'sec1', {'username': 'usr', 'password': 'hunter2'}, info='A description.'
+    )
 
     output = juju.cli('show-secret', 'sec1', '--reveal', '--format', 'json')
     result = json.loads(output)
@@ -16,9 +18,11 @@ def test_add_secret(juju: jubilant.Juju):
 
 
 def test_update_secret(juju: jubilant.Juju):
-    uri = juju.secret('sec2', {'username': 'usr', 'password': 'hunter2'}, info='A description.')
-    juju.secret(
-        'sec2', {'username': 'usr2', 'password': 'hunter3'}, info='A new description.', update=True
+    uri = juju.add_secret(
+        'sec2', {'username': 'usr', 'password': 'hunter2'}, info='A description.'
+    )
+    juju.update_secret(
+        'sec2', {'username': 'usr2', 'password': 'hunter3'}, info='A new description.'
     )
 
     output = juju.cli('show-secret', 'sec2', '--reveal', '--format', 'json')
@@ -47,7 +51,7 @@ def test_get_all_secrets(juju: jubilant.Juju):
             'revision': 2,
         },
     ]
-    secrets = juju.secret()
+    secrets = juju.secrets()
 
     assert isinstance(secrets, list)
     assert len(secrets) > 0
@@ -60,8 +64,8 @@ def test_get_all_secrets(juju: jubilant.Juju):
         assert secret.created == secret.updated
 
 
-def test_get_secret(juju: jubilant.Juju):
-    secret = juju.secret(name='sec1')
+def test_show_secret(juju: jubilant.Juju):
+    secret = juju.show_secret(name_or_uri='sec1')
 
     assert secret.revision == 1
     assert secret.owner == '<model>'
@@ -71,5 +75,5 @@ def test_get_secret(juju: jubilant.Juju):
     assert secret.created == secret.updated
     assert secret.content == {'username': 'usr', 'password': 'hunter2'}
 
-    secret_again = juju.secret(uri=secret.uri)
+    secret_again = juju.show_secret(name_or_uri=secret.uri)
     assert secret == secret_again
