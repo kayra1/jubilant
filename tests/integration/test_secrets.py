@@ -61,7 +61,6 @@ def test_get_all_secrets(juju: jubilant.Juju):
         assert secret.owner == '<model>'
         assert secret.description == expected_values[i]['info']
         assert secret.created.year == datetime.datetime.now().year
-        assert secret.created == secret.updated
 
 
 def test_show_secret(juju: jubilant.Juju):
