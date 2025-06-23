@@ -903,7 +903,7 @@ class Juju:
         reveal: bool = False,
         revisions: bool = False,
         revision: int | None = None,
-    ) -> Secret[Revealed] | Secret:
+    ) -> Secret[Revealed] | Secret[Hidden]:
         """Get the content of a secret.
 
         Args:
