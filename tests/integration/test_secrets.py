@@ -66,6 +66,15 @@ def test_get_all_secrets(juju: jubilant.Juju):
 def test_show_secret(juju: jubilant.Juju):
     secret = juju.show_secret(name_or_uri='sec1')
 
+    juju.show_secret(name_or_uri='sec1')  # Valid
+    juju.show_secret(name_or_uri='sec1', reveal=True)  # Valid
+    juju.show_secret(name_or_uri='sec1', reveal=True, revision=2)  # Valid
+    juju.show_secret(name_or_uri='sec1', revisions=True)  # Valid
+
+    juju.show_secret(name_or_uri='sec1', revisions=True, reveal=True)  # Invalid
+    juju.show_secret(name_or_uri='sec1', revisions=True, revision=1)  # Invalid
+    juju.show_secret(name_or_uri='sec1', revisions=True, reveal=True, revision=1)  # Invalid
+
     assert secret.revision == 1
     assert secret.owner == '<model>'
     assert secret.name == 'sec1'

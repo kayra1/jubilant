@@ -12,11 +12,11 @@ import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
 from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
 from ._task import Task
+from .secrettypes import Redacted, Revealed, Secret, SecretURI
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -37,51 +37,6 @@ class CLIError(subprocess.CalledProcessError):
 
 class WaitError(Exception):
     """Raised when :meth:`Juju.wait`'s *error* callable returns False."""
-
-
-class SecretURI(str):
-    """A string subclass that represents a secret URI ("secret:...")."""
-
-    @property
-    def unique_identifier(self) -> str:
-        """Unique identifier of this secret URI.
-
-        This is the secret's globally-unique identifier (currently a 20-character Xid,
-        for example "9m4e2mr0ui3e8a215n4g").
-        """
-        if '/' in self:
-            # Handle 'secret://MODEL-UUID/UNIQUE-IDENTIFIER'
-            return self.rsplit('/', maxsplit=1)[-1]
-        elif self.startswith('secret:'):
-            # Handle common case of 'secret:UNIQUE-IDENTIFIER'
-            return self[len('secret:') :]
-        else:
-            return str(self)
-
-
-@dataclass
-class RedactedSecret:
-    uri: SecretURI
-    name: str | None
-    owner: str
-    description: str
-    rotation: str | Literal['never']
-    revision: int
-    created: datetime.datetime
-    updated: datetime.datetime
-
-
-@dataclass
-class RevealedSecret:
-    uri: SecretURI
-    revision: int
-    checksum: str
-    owner: str
-    description: str
-    name: str | None
-    created: datetime.datetime
-    updated: datetime.datetime
-    content: dict[str, str]
 
 
 ConfigValue = Union[bool, int, float, str, SecretURI]
@@ -716,6 +671,19 @@ class Juju:
             args.append('--force')
         self.cli(*args)
 
+    def remove_secret(self, name_or_uri: SecretURI, *, revision: int | None = None) -> None:
+        """Remove a secret from the model.
+
+        Args:
+            name_or_uri: The URI of the secret to remove.
+            revision: The revision of the secret to remove.
+        """
+        args = ['remove-secret', str(name_or_uri)]
+        if revision is not None:
+            args.append('--revision')
+            args.append(str(revision))
+        self.cli(*args)
+
     def remove_unit(
         self,
         *app_or_unit: str,
@@ -864,7 +832,7 @@ class Juju:
 
         self.cli(*args)
 
-    def secrets(self) -> Iterable[RedactedSecret]:
+    def secrets(self) -> Iterable[Secret[None]]:  # TODO: update the type def
         """Get all secrets in the model.
 
         Returns:
@@ -873,38 +841,90 @@ class Juju:
         stdout = self.cli('secrets', '--format', 'json')
         output = json.loads(stdout)
         return [
-            RedactedSecret(
-                revision=int(obj['revision']),
+            Secret(
                 uri=SecretURI('secret:' + uri_from_juju),
                 name=str(obj['name']) if 'name' in obj else None,
                 owner=str(obj['owner']) if 'owner' in obj else '<model>',
-                description=str(obj['description']) if 'description' in obj else '',
                 rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
+                revision=int(obj['revision']),
+                description=str(obj['description']) if 'description' in obj else '',
                 created=datetime.datetime.fromisoformat(str(obj['created']))
                 if 'created' in obj
                 else datetime.datetime.now(),
                 updated=datetime.datetime.fromisoformat(str(obj['updated']))
                 if 'updated' in obj
                 else datetime.datetime.now(),
+                checksum="",
+                expires=None,
+                rotates=None,
+                label=None,
+                error="",
+                content=None,
+                access=[],
+                revisions=[]
             )
             for uri_from_juju, obj in output.items()
         ]
 
-    def show_secret(self, name_or_uri: str, revision: int | None = None) -> RevealedSecret:
+    @overload
+    def show_secret(
+        self,
+        name_or_uri: str,
+        *,
+        reveal: Literal[True],
+        revisions: Literal[False] = False,
+        revision: int | None = None,
+    ) -> Secret[dict[str,str]]: ... # TODO: dict[str, str] => revealed
+
+    @overload
+    def show_secret(
+        self,
+        name_or_uri: str,
+        *,
+        reveal: Literal[False] = False,
+        revisions: Literal[False] = False,
+        revision: int | None = None,
+    ) -> Secret[None]: ... # TODO: None => redacted
+
+    @overload
+    def show_secret(
+        self,
+        name_or_uri: str,
+        *,
+        reveal: Literal[False] = False,
+        revisions: Literal[True],
+        revision: None = None,
+    ) -> Secret[None]: ... # TODO: None => redacted
+
+    def show_secret(
+        self,
+        name_or_uri: str,
+        *,
+        reveal: bool = True,
+        revisions: bool = False,
+        revision: int | None = None,
+    ) -> Secret[dict[str,str]] | Secret[None]:
         """Get the content of a secret.
 
         Args:
             name_or_uri: Name or URI of the secret to reveal.
+            reveal: Whether to reveal the secret content.
+            revisions: Whether to include all revisions of the secret. Mutually
+                exclusive with `reveal` and `revision`.
             revision: Optional revision number of the secret to reveal. If not specified,
                 the latest revision is revealed.
         """
-        args = ['show-secret', name_or_uri, '--reveal', '--format', 'json']
+        args = ['show-secret', name_or_uri, '--format', 'json']
+        if reveal:
+            args.append('--reveal')
+        if revisions:
+            args.append('--revisions')
         if revision is not None:
             args.extend(['--revision', str(revision)])
         stdout = self.cli(*args)
         output = json.loads(stdout)
         uri_from_juju, obj = next(iter(output.items()))
-        return RevealedSecret(
+        return Secret(
             uri=SecretURI('secret:' + uri_from_juju),
             revision=int(obj['revision']) if 'revision' in obj else 0,
             checksum=str(obj['checksum']) if 'checksum' in obj else '',
@@ -913,7 +933,14 @@ class Juju:
             name=str(obj['name']) if 'name' in obj else None,
             created=datetime.datetime.fromisoformat(str(obj['created'])),
             updated=datetime.datetime.fromisoformat(str(obj['updated'])),
-            content=obj['content']['Data'],
+            content=obj['content']['Data'] if reveal else None,
+            access=[],
+            revisions=[],
+            expires=None,
+            label=None,
+            error="",
+            rotates=None,
+            rotation='never',
         )
 
     def ssh(
@@ -985,7 +1012,13 @@ class Juju:
         self.cli(*args)
 
     def update_secret(
-        self, name_or_uri: str, content: Mapping[str, str], *, info: str | None = None
+        self,
+        name_or_uri: str,
+        content: Mapping[str, str],
+        *,
+        info: str | None = None,
+        name: str | None = None,
+        auto_prune: bool = False,
     ) -> None:
         """Update the content of a secret.
 
@@ -994,6 +1027,8 @@ class Juju:
             content: Key-value pairs that represent the secret content, for example
                 ``{'password': 'hunter2'}``.
             info: Optional description for the secret.
+            name: Optional new name for the secret.
+            auto_prune: automatically remove revisions that are no longer tracked by any observers.
         """
         args = ['update-secret', name_or_uri]
         if info is not None:
