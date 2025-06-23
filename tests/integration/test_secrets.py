@@ -65,23 +65,27 @@ def test_get_all_secrets(juju: jubilant.Juju):
 
 def test_show_secret(juju: jubilant.Juju):
     secret = juju.show_secret(name_or_uri='sec1')
-
-    juju.show_secret(name_or_uri='sec1')  # Valid
-    juju.show_secret(name_or_uri='sec1', reveal=True)  # Valid
-    juju.show_secret(name_or_uri='sec1', reveal=True, revision=2)  # Valid
-    juju.show_secret(name_or_uri='sec1', revisions=True)  # Valid
-
-    juju.show_secret(name_or_uri='sec1', revisions=True, reveal=True)  # Invalid
-    juju.show_secret(name_or_uri='sec1', revisions=True, revision=1)  # Invalid
-    juju.show_secret(name_or_uri='sec1', revisions=True, reveal=True, revision=1)  # Invalid
-
     assert secret.revision == 1
     assert secret.owner == '<model>'
     assert secret.name == 'sec1'
     assert secret.description == 'A description.'
     assert secret.created.year == datetime.datetime.now().year
     assert secret.created == secret.updated
+    assert secret.content is None
+
+    secret = juju.show_secret(name_or_uri='sec1', reveal=True)
     assert secret.content == {'username': 'usr', 'password': 'hunter2'}
 
-    secret_again = juju.show_secret(name_or_uri=secret.uri)
-    assert secret == secret_again
+    secret = juju.show_secret(name_or_uri='sec2', reveal=True, revision=1)
+    assert secret.content == {'username': 'usr', 'password': 'hunter2'}
+    secret = juju.show_secret(name_or_uri='sec2', reveal=True, revision=2)
+    assert secret.content == {'username': 'usr2', 'password': 'hunter3'}
+
+    secret = juju.show_secret(name_or_uri='sec2', revisions=True)
+    assert secret.content is None
+    assert len(secret.revisions) == 2
+    assert secret.revisions[0].revision == 1
+    assert secret.revisions[1].revision == 2
+
+    secret_with_uri = juju.show_secret(name_or_uri=secret.uri)
+    assert secret.name == secret_with_uri.name

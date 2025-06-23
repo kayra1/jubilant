@@ -42,17 +42,20 @@ class SecretRevision:
 
     revision: int
     backend: str
-    created: str
-    updated: str
+    created: datetime.datetime
+    updated: datetime.datetime
 
 
-T = TypeVar('T')
+NoneType = type(None)
+Hidden = NoneType
 Revealed = Dict[str, str]
-Redacted = None
+T = TypeVar('T', Revealed, Hidden)
 
 
 @dataclasses.dataclass
 class Secret(Generic[T]):
+    """Represents a secret."""
+
     uri: SecretURI
     revision: int
     checksum: str

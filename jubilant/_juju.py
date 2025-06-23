@@ -16,7 +16,7 @@ from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
 from ._task import Task
-from .secrettypes import Redacted, Revealed, Secret, SecretURI
+from .secrettypes import Hidden, Revealed, Secret, SecretRevision, SecretURI
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -832,7 +832,7 @@ class Juju:
 
         self.cli(*args)
 
-    def secrets(self) -> Iterable[Secret[None]]:  # TODO: update the type def
+    def secrets(self) -> Iterable[Secret[Hidden]]:
         """Get all secrets in the model.
 
         Returns:
@@ -848,20 +848,20 @@ class Juju:
                 rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
                 revision=int(obj['revision']),
                 description=str(obj['description']) if 'description' in obj else '',
-                created=datetime.datetime.fromisoformat(str(obj['created']))
+                created=datetime.datetime.fromisoformat(str(obj['created'].replace('Z', '+00:00')))
                 if 'created' in obj
                 else datetime.datetime.now(),
-                updated=datetime.datetime.fromisoformat(str(obj['updated']))
+                updated=datetime.datetime.fromisoformat(str(obj['updated'].replace('Z', '+00:00')))
                 if 'updated' in obj
                 else datetime.datetime.now(),
-                checksum="",
+                checksum='',
                 expires=None,
                 rotates=None,
                 label=None,
-                error="",
+                error='',
                 content=None,
                 access=[],
-                revisions=[]
+                revisions=[],
             )
             for uri_from_juju, obj in output.items()
         ]
@@ -874,7 +874,7 @@ class Juju:
         reveal: Literal[True],
         revisions: Literal[False] = False,
         revision: int | None = None,
-    ) -> Secret[dict[str,str]]: ... # TODO: dict[str, str] => revealed
+    ) -> Secret[Revealed]: ...
 
     @overload
     def show_secret(
@@ -884,7 +884,7 @@ class Juju:
         reveal: Literal[False] = False,
         revisions: Literal[False] = False,
         revision: int | None = None,
-    ) -> Secret[None]: ... # TODO: None => redacted
+    ) -> Secret[Hidden]: ...
 
     @overload
     def show_secret(
@@ -894,16 +894,16 @@ class Juju:
         reveal: Literal[False] = False,
         revisions: Literal[True],
         revision: None = None,
-    ) -> Secret[None]: ... # TODO: None => redacted
+    ) -> Secret[Hidden]: ...
 
     def show_secret(
         self,
         name_or_uri: str,
         *,
-        reveal: bool = True,
+        reveal: bool = False,
         revisions: bool = False,
         revision: int | None = None,
-    ) -> Secret[dict[str,str]] | Secret[None]:
+    ) -> Secret[Revealed] | Secret:
         """Get the content of a secret.
 
         Args:
@@ -931,16 +931,30 @@ class Juju:
             owner=str(obj['owner']) if 'owner' in obj else '<model>',
             description=str(obj['description']) if 'description' in obj else '',
             name=str(obj['name']) if 'name' in obj else None,
-            created=datetime.datetime.fromisoformat(str(obj['created'])),
-            updated=datetime.datetime.fromisoformat(str(obj['updated'])),
+            created=datetime.datetime.fromisoformat(str(obj['created'].replace('Z', '+00:00'))),
+            updated=datetime.datetime.fromisoformat(str(obj['updated'].replace('Z', '+00:00'))),
             content=obj['content']['Data'] if reveal else None,
             access=[],
-            revisions=[],
+            revisions=[
+                SecretRevision(
+                    revision=revision['revision'],
+                    backend=revision['backend'],
+                    created=datetime.datetime.fromisoformat(
+                        str(revision['created'].replace('Z', '+00:00'))
+                    ),
+                    updated=datetime.datetime.fromisoformat(
+                        str(revision['updated'].replace('Z', '+00:00'))
+                    ),
+                )
+                for revision in obj['revisions']
+            ]
+            if 'revisions' in obj
+            else [],
             expires=None,
-            label=None,
-            error="",
-            rotates=None,
-            rotation='never',
+            label=str(obj['label']) if 'label' in obj else None,
+            error='',
+            rotates=str(obj['rotates']) if 'rotates' in obj else 'never',
+            rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
         )
 
     def ssh(
