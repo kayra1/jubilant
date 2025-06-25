@@ -680,8 +680,7 @@ class Juju:
         """
         args = ['remove-secret', name_or_uri]
         if revision is not None:
-            args.append('--revision')
-            args.append(str(revision))
+            args.extend(['--revision', str(revision)])
         self.cli(*args)
 
     def remove_unit(
@@ -832,11 +831,11 @@ class Juju:
 
         self.cli(*args)
 
-    def secrets(self) -> Iterable[Secret[Hidden]]:
+    def secrets(self) -> list[Secret[Hidden]]:
         """Get all secrets in the model.
 
         Returns:
-            A list of :class:`RedactedSecret` objects, one for each secret in the model.
+            A list of :class:`Secret[Hidden]` objects, one for each secret in the model.
         """
         stdout = self.cli('secrets', '--format', 'json')
         output = json.loads(stdout)
