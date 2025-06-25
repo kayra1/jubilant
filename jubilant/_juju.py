@@ -671,7 +671,7 @@ class Juju:
             args.append('--force')
         self.cli(*args)
 
-    def remove_secret(self, name_or_uri: SecretURI, *, revision: int | None = None) -> None:
+    def remove_secret(self, name_or_uri: str | SecretURI, *, revision: int | None = None) -> None:
         """Remove a secret from the model.
 
         Args:
@@ -869,7 +869,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str,
+        name_or_uri: str | SecretURI,
         *,
         reveal: Literal[True],
         revisions: Literal[False] = False,
@@ -879,7 +879,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str,
+        name_or_uri: str | SecretURI,
         *,
         reveal: Literal[False] = False,
         revisions: Literal[False] = False,
@@ -889,7 +889,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str,
+        name_or_uri: str | SecretURI,
         *,
         reveal: Literal[False] = False,
         revisions: Literal[True],
@@ -898,7 +898,7 @@ class Juju:
 
     def show_secret(
         self,
-        name_or_uri: str,
+        name_or_uri: str | SecretURI,
         *,
         reveal: bool = False,
         revisions: bool = False,
@@ -1027,7 +1027,7 @@ class Juju:
 
     def update_secret(
         self,
-        name_or_uri: str,
+        name_or_uri: str | SecretURI,
         content: Mapping[str, str],
         *,
         info: str | None = None,
