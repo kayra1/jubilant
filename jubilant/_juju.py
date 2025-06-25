@@ -871,8 +871,8 @@ class Juju:
         name_or_uri: str | SecretURI,
         *,
         reveal: Literal[True],
-        revisions: Literal[False] = False,
         revision: int | None = None,
+        revisions: Literal[False] = False,
     ) -> Secret[Revealed]: ...
 
     @overload
@@ -881,8 +881,8 @@ class Juju:
         name_or_uri: str | SecretURI,
         *,
         reveal: Literal[False] = False,
-        revisions: Literal[False] = False,
         revision: int | None = None,
+        revisions: Literal[False] = False,
     ) -> Secret[Hidden]: ...
 
     @overload
@@ -891,8 +891,8 @@ class Juju:
         name_or_uri: str | SecretURI,
         *,
         reveal: Literal[False] = False,
-        revisions: Literal[True],
         revision: None = None,
+        revisions: Literal[True],
     ) -> Secret[Hidden]: ...
 
     def show_secret(
@@ -900,8 +900,8 @@ class Juju:
         name_or_uri: str | SecretURI,
         *,
         reveal: bool = False,
-        revisions: bool = False,
         revision: int | None = None,
+        revisions: bool = False,
     ) -> Secret[Revealed] | Secret[Hidden]:
         """Get the content of a secret.
 
