@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-from typing import Dict, Generic, Literal, TypeVar
+from typing import Dict, Generic, Literal, TypedDict, TypeVar
+
+from typing_extensions import NotRequired
 
 
 class SecretURI(str):
@@ -72,3 +74,33 @@ class Secret(Generic[T]):
     content: T
     revisions: list[SecretRevision]
     access: list[SecretAccess]
+
+
+class SecretResponse(TypedDict, total=False):
+    """TypedDict for secret response that arrives from the juju CLI."""
+
+    uri: SecretURI
+    revision: int
+    checksum: str
+    expires: str
+    rotation: str
+    rotates: str
+    owner: str
+    description: str
+    name: str
+    label: str
+    created: str
+    updated: str
+    error: str
+    content: NotRequired[dict[str, dict[str, str]]]
+    revisions: list[SecretRevisionResponse]
+    access: list[SecretAccess]
+
+
+class SecretRevisionResponse(TypedDict):
+    """TypedDict for revision response that arrives from the juju CLI."""
+
+    revision: int
+    backend: str
+    created: str
+    updated: str

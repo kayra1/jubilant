@@ -16,7 +16,7 @@ from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
 from ._task import Task
-from .secrettypes import Hidden, Revealed, Secret, SecretRevision, SecretURI
+from .secrettypes import Hidden, Revealed, Secret, SecretResponse, SecretRevision, SecretURI
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -838,27 +838,27 @@ class Juju:
             A list of :class:`Secret[Hidden]` objects, one for each secret in the model.
         """
         stdout = self.cli('secrets', '--format', 'json')
-        output = json.loads(stdout)
+        output: dict[str, SecretResponse] = json.loads(stdout)
         return [
-            Secret(
+            Secret[Hidden](
                 uri=SecretURI('secret:' + uri_from_juju),
-                name=str(obj['name']) if 'name' in obj else None,
-                owner=str(obj['owner']) if 'owner' in obj else '<model>',
-                rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
-                revision=int(obj['revision']),
-                description=str(obj['description']) if 'description' in obj else '',
+                name=obj.get('name', None),
+                owner=obj.get('owner', '<model>'),
+                rotation=obj.get('rotation', 'never'),
+                revision=obj.get('revision', 1),
+                description=obj.get('description', ''),
                 created=datetime.datetime.fromisoformat(
-                    str(obj['created'].replace('Z', '+00:00'))
+                    str(obj.get('created', '').replace('Z', '+00:00'))
                 ),
                 updated=datetime.datetime.fromisoformat(
-                    str(obj['updated'].replace('Z', '+00:00'))
+                    str(obj.get('updated', '').replace('Z', '+00:00'))
                 ),
+                content=None,
                 checksum='',
                 expires=None,
                 rotates=None,
                 label=None,
                 error='',
-                content=None,
                 access=[],
                 revisions=[],
             )
@@ -921,28 +921,32 @@ class Juju:
         if revision is not None:
             args.extend(['--revision', str(revision)])
         stdout = self.cli(*args)
-        output = json.loads(stdout)
+        output: dict[str, SecretResponse] = json.loads(stdout)
         uri_from_juju, obj = next(iter(output.items()))
-        return Secret(
+        return Secret[Any](
             uri=SecretURI('secret:' + uri_from_juju),
-            revision=int(obj['revision']) if 'revision' in obj else 0,
-            checksum=str(obj['checksum']) if 'checksum' in obj else '',
-            owner=str(obj['owner']) if 'owner' in obj else '<model>',
-            description=str(obj['description']) if 'description' in obj else '',
-            name=str(obj['name']) if 'name' in obj else None,
-            created=datetime.datetime.fromisoformat(str(obj['created'].replace('Z', '+00:00'))),
-            updated=datetime.datetime.fromisoformat(str(obj['updated'].replace('Z', '+00:00'))),
-            content=obj['content']['Data'] if reveal else None,
+            revision=obj.get('revision', 0),
+            checksum=obj.get('checksum', ''),
+            owner=obj.get('owner', '<model>'),
+            description=obj.get('description', ''),
+            name=obj.get('name', None),
+            created=datetime.datetime.fromisoformat(
+                str(obj.get('created', '').replace('Z', '+00:00'))
+            ),
+            updated=datetime.datetime.fromisoformat(
+                str(obj.get('updated', '').replace('Z', '+00:00'))
+            ),
+            content=obj.get('content', {}).get('Data', None),
             access=[],
             revisions=[
                 SecretRevision(
-                    revision=revision['revision'],
-                    backend=revision['backend'],
+                    revision=revision.get('revision', ''),
+                    backend=revision.get('backend', ''),
                     created=datetime.datetime.fromisoformat(
-                        str(revision['created'].replace('Z', '+00:00'))
+                        str(revision.get('created', '').replace('Z', '+00:00'))
                     ),
                     updated=datetime.datetime.fromisoformat(
-                        str(revision['updated'].replace('Z', '+00:00'))
+                        str(revision.get('updated', '').replace('Z', '+00:00'))
                     ),
                 )
                 for revision in obj['revisions']
@@ -950,10 +954,10 @@ class Juju:
             if 'revisions' in obj
             else [],
             expires=None,
-            label=str(obj['label']) if 'label' in obj else None,
+            label=obj.get('label', None),
             error='',
-            rotates=str(obj['rotates']) if 'rotates' in obj else 'never',
-            rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
+            rotates=obj.get('rotates', None),
+            rotation=obj.get('rotation', 'never'),
         )
 
     def ssh(
