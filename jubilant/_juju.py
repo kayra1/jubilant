@@ -847,12 +847,12 @@ class Juju:
                 rotation=str(obj['rotation']) if 'rotation' in obj else 'never',
                 revision=int(obj['revision']),
                 description=str(obj['description']) if 'description' in obj else '',
-                created=datetime.datetime.fromisoformat(str(obj['created'].replace('Z', '+00:00')))
-                if 'created' in obj
-                else datetime.datetime.now(),
-                updated=datetime.datetime.fromisoformat(str(obj['updated'].replace('Z', '+00:00')))
-                if 'updated' in obj
-                else datetime.datetime.now(),
+                created=datetime.datetime.fromisoformat(
+                    str(obj['created'].replace('Z', '+00:00'))
+                ),
+                updated=datetime.datetime.fromisoformat(
+                    str(obj['updated'].replace('Z', '+00:00'))
+                ),
                 checksum='',
                 expires=None,
                 rotates=None,
