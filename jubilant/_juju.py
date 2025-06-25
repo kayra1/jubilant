@@ -678,7 +678,7 @@ class Juju:
             name_or_uri: The URI of the secret to remove.
             revision: The revision of the secret to remove.
         """
-        args = ['remove-secret', str(name_or_uri)]
+        args = ['remove-secret', name_or_uri]
         if revision is not None:
             args.append('--revision')
             args.append(str(revision))
