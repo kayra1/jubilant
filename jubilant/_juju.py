@@ -1045,8 +1045,12 @@ class Juju:
             auto_prune: automatically remove revisions that are no longer tracked by any observers.
         """
         args = ['update-secret', name_or_uri]
+        if name is not None:
+            args.extend(['--name', name])
         if info is not None:
             args.extend(['--info', info])
+        if auto_prune:
+            args.append('--auto-prune')
 
         with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
             _yaml.safe_dump(content, file)
