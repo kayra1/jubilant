@@ -4,9 +4,22 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import enum
 from typing import Dict, Generic, Literal, TypedDict, TypeVar
 
-from typing_extensions import NotRequired
+from typing_extensions import Required
+
+
+class SecretRotateCadence(enum.Enum):
+    """Secret rotation policies."""
+
+    NEVER = 'never'
+    HOURLY = 'hourly'
+    DAILY = 'daily'
+    WEEKLY = 'weekly'
+    MONTHLY = 'monthly'
+    QUARTERLY = 'quarterly'
+    YEARLY = 'yearly'
 
 
 class SecretURI(str):
@@ -29,7 +42,7 @@ class SecretURI(str):
             return str(self)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class SecretAccess:
     """Represents access to a secret."""
 
@@ -38,7 +51,7 @@ class SecretAccess:
     role: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class SecretRevision:
     """Represents a revision of a secret."""
 
@@ -54,53 +67,59 @@ Revealed = Dict[str, str]
 T = TypeVar('T', Revealed, Hidden)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Secret(Generic[T]):
     """Represents a secret."""
 
     uri: SecretURI
     revision: int
-    checksum: str
+    checksum: str | None
     expires: str | None
-    rotation: str | Literal['never']
-    rotates: str | None
-    owner: str | None
+    rotation: SecretRotateCadence | None
+    rotates: datetime.datetime | None
+    owner: str
     description: str | None
     name: str | None
     label: str | None
     created: datetime.datetime
     updated: datetime.datetime
-    error: str
     content: T
-    revisions: list[SecretRevision]
-    access: list[SecretAccess]
+    revisions: list[SecretRevision] | None
+    access: list[SecretAccess] | None
 
 
-class SecretResponse(TypedDict, total=False):
+class _SecretResponse(TypedDict, total=False):
     """TypedDict for secret response that arrives from the juju CLI."""
 
     uri: SecretURI
-    revision: int
+    revision: Required[int]
     checksum: str
     expires: str
-    rotation: str
+    rotation: SecretRotateCadence
     rotates: str
-    owner: str
+    owner: Required[str]
     description: str
     name: str
     label: str
-    created: str
-    updated: str
+    created: Required[str]
+    updated: Required[str]
     error: str
-    content: NotRequired[dict[str, dict[str, str]]]
-    revisions: list[SecretRevisionResponse]
-    access: list[SecretAccess]
+    content: dict[str, dict[str, str]]
+    revisions: list[_SecretRevisionResponse]
+    access: list[_SecretAccessResponse]
 
 
-class SecretRevisionResponse(TypedDict):
+class _SecretRevisionResponse(TypedDict):
     """TypedDict for revision response that arrives from the juju CLI."""
 
     revision: int
     backend: str
     created: str
     updated: str
+
+class _SecretAccessResponse(TypedDict):
+    """TypedDict for access response that arrives from the juju CLI."""
+
+    target: str
+    scope: str
+    role: Literal['read',]  # TBD

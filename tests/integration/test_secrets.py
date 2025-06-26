@@ -83,6 +83,7 @@ def test_show_secret(juju: jubilant.Juju):
 
     secret = juju.show_secret(name_or_uri='sec2', revisions=True)
     assert secret.content is None
+    assert secret.revisions
     assert len(secret.revisions) == 2
     assert secret.revisions[0].revision == 1
     assert secret.revisions[1].revision == 2
