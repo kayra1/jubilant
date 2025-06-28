@@ -21,6 +21,8 @@ from .secrettypes import (
     Revealed,
     Secret,
     SecretAccess,
+    SecretAccessRole,
+    SecretAccessScope,
     SecretRevision,
     SecretURI,
     _SecretResponse,
@@ -493,6 +495,11 @@ class Juju:
         task.raise_on_failure()
         return task
 
+    def grant_secret(self, name_or_uri: str | SecretURI, applications: Iterable[str]) -> None:
+        """Grant access to a secret to a specific target."""
+        args = ['grant-secret', name_or_uri, ','.join(applications)]
+        self.cli(*args)
+
     def integrate(self, app1: str, app2: str, *, via: str | Iterable[str] | None = None) -> None:
         """Integrate two applications, creating a relation between them.
 
@@ -950,7 +957,9 @@ class Juju:
             checksum=obj.get('checksum', ''),
             access=[
                 SecretAccess(
-                    role=access.get('role'), scope=access.get('scope'), target=access.get('target')
+                    role=SecretAccessRole(access.get('role')),
+                    scope=SecretAccessScope(access.get('scope')),
+                    target=access.get('target'),
                 )
                 for access in obj['access']
             ]

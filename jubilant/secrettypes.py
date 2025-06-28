@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import enum
-from typing import Dict, Generic, Literal, TypedDict, TypeVar
+from typing import Dict, Generic, TypedDict, TypeVar
 
 from typing_extensions import Required
 
@@ -20,6 +20,23 @@ class SecretRotateCadence(enum.Enum):
     MONTHLY = 'monthly'
     QUARTERLY = 'quarterly'
     YEARLY = 'yearly'
+
+
+class SecretAccessScope(enum.Enum):
+    """Secret access scopes."""
+
+    UNIT = 'unit'
+    APPLICATION = 'application'
+    MODEL = 'model'
+    RELATION = 'relation'
+
+
+class SecretAccessRole(enum.Enum):
+    """Secret access roles."""
+
+    VIEW = 'view'
+    ROTATE = 'rotate'
+    MANAGE = 'manage'
 
 
 class SecretURI(str):
@@ -40,25 +57,6 @@ class SecretURI(str):
             return self[len('secret:') :]
         else:
             return str(self)
-
-
-@dataclasses.dataclass(frozen=True)
-class SecretAccess:
-    """Represents access to a secret."""
-
-    target: str
-    scope: str
-    role: str
-
-
-@dataclasses.dataclass(frozen=True)
-class SecretRevision:
-    """Represents a revision of a secret."""
-
-    revision: int
-    backend: str
-    created: datetime.datetime
-    updated: datetime.datetime
 
 
 NoneType = type(None)
@@ -86,6 +84,25 @@ class Secret(Generic[T]):
     content: T
     revisions: list[SecretRevision] | None
     access: list[SecretAccess] | None
+
+
+@dataclasses.dataclass(frozen=True)
+class SecretRevision:
+    """Represents a revision of a secret."""
+
+    revision: int
+    backend: str
+    created: datetime.datetime
+    updated: datetime.datetime
+
+
+@dataclasses.dataclass(frozen=True)
+class SecretAccess:
+    """Represents access to a secret."""
+
+    target: str
+    scope: SecretAccessScope
+    role: SecretAccessRole
 
 
 class _SecretResponse(TypedDict, total=False):
@@ -117,9 +134,10 @@ class _SecretRevisionResponse(TypedDict):
     created: str
     updated: str
 
+
 class _SecretAccessResponse(TypedDict):
     """TypedDict for access response that arrives from the juju CLI."""
 
     target: str
     scope: str
-    role: Literal['read',]  # TBD
+    role: str
