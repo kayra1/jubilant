@@ -496,7 +496,12 @@ class Juju:
         return task
 
     def grant_secret(self, name_or_uri: str | SecretURI, applications: Iterable[str]) -> None:
-        """Grant access to a secret to a specific target."""
+        """Grant access to a secret to a list of applications.
+
+        Args:
+            name_or_uri: The name or URI of the secret to grant access to.
+            applications: Iterable of application names to grant access to.
+        """
         args = ['grant-secret', name_or_uri, ','.join(applications)]
         self.cli(*args)
 
