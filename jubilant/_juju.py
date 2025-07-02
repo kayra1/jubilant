@@ -495,7 +495,7 @@ class Juju:
         task.raise_on_failure()
         return task
 
-    def grant_secret(self, name_or_uri: str | SecretURI, applications: Iterable[str]) -> None:
+    def grant_secret(self, name_or_uri: str | SecretURI, /, applications: Iterable[str]) -> None:
         """Grant access to a secret to a list of applications.
 
         Args:
@@ -691,7 +691,7 @@ class Juju:
             args.append('--force')
         self.cli(*args)
 
-    def remove_secret(self, name_or_uri: str | SecretURI, *, revision: int | None = None) -> None:
+    def remove_secret(self, name_or_uri: str | SecretURI, /, *, revision: int | None = None) -> None:
         """Remove a secret from the model.
 
         Args:
@@ -886,6 +886,7 @@ class Juju:
     def show_secret(
         self,
         name_or_uri: str | SecretURI,
+        /,
         *,
         reveal: Literal[True],
         revision: int | None = None,
@@ -896,6 +897,7 @@ class Juju:
     def show_secret(
         self,
         name_or_uri: str | SecretURI,
+        /,
         *,
         reveal: Literal[False] = False,
         revision: int | None = None,
@@ -906,6 +908,7 @@ class Juju:
     def show_secret(
         self,
         name_or_uri: str | SecretURI,
+        /,
         *,
         reveal: Literal[False] = False,
         revision: None = None,
@@ -915,6 +918,7 @@ class Juju:
     def show_secret(
         self,
         name_or_uri: str | SecretURI,
+        /,
         *,
         reveal: bool = False,
         revision: int | None = None,
@@ -1058,6 +1062,7 @@ class Juju:
     def update_secret(
         self,
         name_or_uri: str | SecretURI,
+        /,
         content: Mapping[str, str],
         *,
         info: str | None = None,
