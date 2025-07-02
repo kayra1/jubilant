@@ -495,7 +495,9 @@ class Juju:
         task.raise_on_failure()
         return task
 
-    def grant_secret(self, name_or_uri: str | SecretURI, /, applications: str | Iterable[str]) -> None:
+    def grant_secret(
+        self, name_or_uri: str | SecretURI, /, applications: str | Iterable[str]
+    ) -> None:
         """Grant access to a secret to a list of applications.
 
         Args:
@@ -693,7 +695,9 @@ class Juju:
             args.append('--force')
         self.cli(*args)
 
-    def remove_secret(self, name_or_uri: str | SecretURI, /, *, revision: int | None = None) -> None:
+    def remove_secret(
+        self, name_or_uri: str | SecretURI, /, *, revision: int | None = None
+    ) -> None:
         """Remove a secret from the model.
 
         Args:
@@ -958,12 +962,8 @@ class Juju:
             expires=obj.get('expires'),
             revision=obj.get('revision'),
             description=obj.get('description', ''),
-            created=datetime.datetime.fromisoformat(
-                str(obj.get('created', '').replace('Z', '+00:00'))
-            ),
-            updated=datetime.datetime.fromisoformat(
-                str(obj.get('updated', '').replace('Z', '+00:00'))
-            ),
+            created=datetime.datetime.fromisoformat(obj['created'].replace('Z', '+00:00')),
+            updated=datetime.datetime.fromisoformat(obj['updated'].replace('Z', '+00:00')),
             content=obj.get('content', {}).get('Data', None),
             checksum=obj.get('checksum', ''),
             access=[
@@ -981,10 +981,10 @@ class Juju:
                     revision=revision.get('revision', ''),
                     backend=revision.get('backend', ''),
                     created=datetime.datetime.fromisoformat(
-                        str(revision.get('created', '').replace('Z', '+00:00'))
+                        revision['created'].replace('Z', '+00:00')
                     ),
                     updated=datetime.datetime.fromisoformat(
-                        str(revision.get('updated', '').replace('Z', '+00:00'))
+                        revision['updated'].replace('Z', '+00:00')
                     ),
                 )
                 for revision in obj['revisions']
