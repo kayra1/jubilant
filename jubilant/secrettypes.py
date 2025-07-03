@@ -105,7 +105,7 @@ class SecretAccess:
     role: SecretAccessRole
 
 
-class _SecretResponse(TypedDict, total=False):
+class _SecretResponse(TypedDict, total=False): # pyright: ignore[reportUnusedClass]
     """TypedDict for secret response that arrives from the juju CLI."""
 
     uri: SecretURI
