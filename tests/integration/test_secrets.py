@@ -35,32 +35,22 @@ def test_update_secret(juju: jubilant.Juju):
 
 
 def test_get_all_secrets(juju: jubilant.Juju):
-    expected_values = [
-        {
-            'name': 'sec1',
-            'username': 'usr',
-            'password': 'hunter2',
-            'info': 'A description.',
-            'revision': 1,
-        },
-        {
-            'name': 'sec2',
-            'username': 'usr2',
-            'password': 'hunter3',
-            'info': 'A new description.',
-            'revision': 2,
-        },
-    ]
     secrets = juju.secrets()
+    assert len(secrets) == 2
 
-    assert isinstance(secrets, list)
-    assert len(secrets) > 0
-    for i, secret in enumerate(secrets):
-        assert secret.revision == expected_values[i]['revision']
-        assert secret.name == expected_values[i]['name']
-        assert secret.owner == '<model>'
-        assert secret.description == expected_values[i]['info']
-        assert secret.created.year == datetime.datetime.now().year
+    assert secrets[0].revision == 1
+    assert secrets[0].name == "sec1"
+    assert secrets[0].owner == '<model>'
+    assert secrets[0].description == "A description."
+    assert secrets[0].created.year == datetime.datetime.now().year
+
+    assert secrets[0].revision == 2
+    assert secrets[0].name == "sec2"
+    assert secrets[0].owner == '<model>'
+    assert secrets[0].description == "A new description."
+    assert secrets[0].created.year == datetime.datetime.now().year
+
+
 
 
 def test_show_secret(juju: jubilant.Juju):
