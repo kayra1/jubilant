@@ -496,17 +496,17 @@ class Juju:
         return task
 
     def grant_secret(
-        self, name_or_uri: str | SecretURI, /, applications: str | Iterable[str]
+        self, identifier: str | SecretURI, app: str | Iterable[str]
     ) -> None:
         """Grant access to a secret to a list of applications.
 
         Args:
-            name_or_uri: The name or URI of the secret to grant access to.
+            identifier: The name or URI of the secret to grant access to.
             applications: Iterable of application names to grant access to.
         """
-        if not isinstance(applications, str):
-            applications = ','.join(applications)
-        args = ['grant-secret', name_or_uri, applications]
+        if not isinstance(app, str):
+            app = ','.join(app)
+        args = ['grant-secret', identifier, app]
         self.cli(*args)
 
     def integrate(self, app1: str, app2: str, *, via: str | Iterable[str] | None = None) -> None:
@@ -696,15 +696,15 @@ class Juju:
         self.cli(*args)
 
     def remove_secret(
-        self, name_or_uri: str | SecretURI, /, *, revision: int | None = None
+        self, identifier: str | SecretURI, *, revision: int | None = None
     ) -> None:
         """Remove a secret from the model.
 
         Args:
-            name_or_uri: The URI of the secret to remove.
+            identifier: The URI of the secret to remove.
             revision: The revision of the secret to remove.
         """
-        args = ['remove-secret', name_or_uri]
+        args = ['remove-secret', identifier]
         if revision is not None:
             args.extend(['--revision', str(revision)])
         self.cli(*args)
@@ -891,8 +891,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str | SecretURI,
-        /,
+        identifier: str | SecretURI,
         *,
         reveal: Literal[True],
         revision: int | None = None,
@@ -902,8 +901,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str | SecretURI,
-        /,
+        identifier: str | SecretURI,
         *,
         reveal: Literal[False] = False,
         revision: int | None = None,
@@ -913,8 +911,7 @@ class Juju:
     @overload
     def show_secret(
         self,
-        name_or_uri: str | SecretURI,
-        /,
+        identifier: str | SecretURI,
         *,
         reveal: Literal[False] = False,
         revision: None = None,
@@ -923,8 +920,7 @@ class Juju:
 
     def show_secret(
         self,
-        name_or_uri: str | SecretURI,
-        /,
+        identifier: str | SecretURI,
         *,
         reveal: bool = False,
         revision: int | None = None,
@@ -933,14 +929,14 @@ class Juju:
         """Get the content of a secret.
 
         Args:
-            name_or_uri: Name or URI of the secret to reveal.
+            identifier: Name or URI of the secret to reveal.
             reveal: Whether to reveal the secret content.
             revisions: Whether to include all revisions of the secret. Mutually
                 exclusive with `reveal` and `revision`.
             revision: Optional revision number of the secret to reveal. If not specified,
                 the latest revision is revealed.
         """
-        args = ['show-secret', name_or_uri, '--format', 'json']
+        args = ['show-secret', identifier, '--format', 'json']
         if reveal:
             args.append('--reveal')
         if revisions:
@@ -1063,8 +1059,7 @@ class Juju:
 
     def update_secret(
         self,
-        name_or_uri: str | SecretURI,
-        /,
+        identifier: str | SecretURI,
         content: Mapping[str, str],
         *,
         info: str | None = None,
@@ -1074,14 +1069,14 @@ class Juju:
         """Update the content of a secret.
 
         Args:
-            name_or_uri: The name or the secret uri for the secret.
+            identifier: The name or the secret uri for the secret.
             content: Key-value pairs that represent the secret content, for example
                 ``{'password': 'hunter2'}``.
             info: Optional description for the secret.
             name: Optional new name for the secret.
             auto_prune: automatically remove revisions that are no longer tracked by any observers.
         """
-        args = ['update-secret', name_or_uri]
+        args = ['update-secret', identifier]
         if name is not None:
             args.extend(['--name', name])
         if info is not None:
