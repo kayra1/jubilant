@@ -44,11 +44,11 @@ def test_get_all_secrets(juju: jubilant.Juju):
     assert secrets[0].description == 'A description.'
     assert secrets[0].created.year == datetime.datetime.now().year
 
-    assert secrets[0].revision == 2
-    assert secrets[0].name == 'sec2'
-    assert secrets[0].owner == '<model>'
-    assert secrets[0].description == 'A new description.'
-    assert secrets[0].created.year == datetime.datetime.now().year
+    assert secrets[1].revision == 2
+    assert secrets[1].name == 'sec2'
+    assert secrets[1].owner == '<model>'
+    assert secrets[1].description == 'A new description.'
+    assert secrets[1].created.year == datetime.datetime.now().year
 
 
 def test_show_secret(juju: jubilant.Juju):
