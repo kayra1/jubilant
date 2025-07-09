@@ -149,7 +149,7 @@ class Juju:
             name: Name for the secret.
             content: Key-value pairs that represent the secret content, for example
                 ``{'password': 'hunter2'}``.
-            info: Optional description for the secret.
+            info: Description for the secret.
         """
         args = ['add-secret', name]
         if info is not None:
@@ -498,11 +498,11 @@ class Juju:
     def grant_secret(
         self, identifier: str | SecretURI, app: str | Iterable[str]
     ) -> None:
-        """Grant access to a secret to a list of applications.
+        """Grant access to a secret for one or more applications.
 
         Args:
             identifier: The name or URI of the secret to grant access to.
-            applications: Iterable of application names to grant access to.
+            app: Name or names of applications to grant access to.
         """
         if not isinstance(app, str):
             app = ','.join(app)
@@ -933,7 +933,7 @@ class Juju:
             reveal: Whether to reveal the secret content.
             revisions: Whether to include all revisions of the secret. Mutually
                 exclusive with `reveal` and `revision`.
-            revision: Optional revision number of the secret to reveal. If not specified,
+            revision: Revision number of the secret to reveal. If not specified,
                 the latest revision is revealed.
         """
         args = ['show-secret', identifier, '--format', 'json']
@@ -1072,8 +1072,8 @@ class Juju:
             identifier: The name or the secret uri for the secret.
             content: Key-value pairs that represent the secret content, for example
                 ``{'password': 'hunter2'}``.
-            info: Optional description for the secret.
-            name: Optional new name for the secret.
+            info: New description for the secret.
+            name: New name for the secret.
             auto_prune: automatically remove revisions that are no longer tracked by any observers.
         """
         args = ['update-secret', identifier]
