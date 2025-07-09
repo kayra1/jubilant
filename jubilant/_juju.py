@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import functools
 import json
 import logging
@@ -16,17 +15,7 @@ from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
 from ._task import Task
-from .secrettypes import (
-    Hidden,
-    Revealed,
-    Secret,
-    Access,
-    AccessRole,
-    AccessScope,
-    Revision,
-    SecretURI,
-    _SecretResponse,
-)
+from .secrettypes import Hidden, Revealed, Secret, SecretURI
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -495,9 +484,7 @@ class Juju:
         task.raise_on_failure()
         return task
 
-    def grant_secret(
-        self, identifier: str | SecretURI, app: str | Iterable[str]
-    ) -> None:
+    def grant_secret(self, identifier: str | SecretURI, app: str | Iterable[str]) -> None:
         """Grant access to a secret for one or more applications.
 
         Args:
@@ -695,9 +682,7 @@ class Juju:
             args.append('--force')
         self.cli(*args)
 
-    def remove_secret(
-        self, identifier: str | SecretURI, *, revision: int | None = None
-    ) -> None:
+    def remove_secret(self, identifier: str | SecretURI, *, revision: int | None = None) -> None:
         """Remove a secret from the model.
 
         Args:
@@ -864,27 +849,9 @@ class Juju:
             A list of :class:`Secret[Hidden]` objects, one for each secret in the model.
         """
         stdout = self.cli('secrets', '--format', 'json')
-        output: dict[str, _SecretResponse] = json.loads(stdout)
+        output = json.loads(stdout)
         return [
-            Secret[Hidden](
-                uri=SecretURI('secret:' + uri_from_juju),
-                name=obj.get('name'),
-                label=obj.get('label'),
-                owner=obj.get('owner'),
-                rotates=datetime.datetime.fromisoformat(obj['rotates'].replace('Z', '+00:00'))
-                if 'rotates' in obj
-                else None,
-                rotation=obj.get('rotation'),
-                revision=obj.get('revision'),
-                description=obj.get('description', ''),
-                created=datetime.datetime.fromisoformat(obj['created'].replace('Z', '+00:00')),
-                updated=datetime.datetime.fromisoformat(obj['updated'].replace('Z', '+00:00')),
-                content=None,
-                checksum=obj.get('checksum'),
-                expires=obj.get('expires'),
-                access=None,
-                revisions=None,
-            )
+            Secret[Hidden]._from_dict({'uri': uri_from_juju, **obj})
             for uri_from_juju, obj in output.items()
         ]
 
@@ -944,50 +911,9 @@ class Juju:
         if revision is not None:
             args.extend(['--revision', str(revision)])
         stdout = self.cli(*args)
-        output: dict[str, _SecretResponse] = json.loads(stdout)
+        output = json.loads(stdout)
         uri_from_juju, obj = next(iter(output.items()))
-        return Secret[Any](
-            uri=SecretURI('secret:' + uri_from_juju),
-            name=obj.get('name'),
-            label=obj.get('label'),
-            owner=obj.get('owner'),
-            rotates=datetime.datetime.fromisoformat(obj['rotates'].replace('Z', '+00:00'))
-            if 'rotates' in obj
-            else None,
-            rotation=obj.get('rotation'),
-            expires=obj.get('expires'),
-            revision=obj.get('revision'),
-            description=obj.get('description', ''),
-            created=datetime.datetime.fromisoformat(obj['created'].replace('Z', '+00:00')),
-            updated=datetime.datetime.fromisoformat(obj['updated'].replace('Z', '+00:00')),
-            content=obj.get('content', {}).get('Data', None),
-            checksum=obj.get('checksum', ''),
-            access=[
-                Access(
-                    role=AccessRole(access.get('role')),
-                    scope=AccessScope(access.get('scope')),
-                    target=access.get('target'),
-                )
-                for access in obj['access']
-            ]
-            if 'access' in obj
-            else None,
-            revisions=[
-                Revision(
-                    revision=revision.get('revision', ''),
-                    backend=revision.get('backend', ''),
-                    created=datetime.datetime.fromisoformat(
-                        revision['created'].replace('Z', '+00:00')
-                    ),
-                    updated=datetime.datetime.fromisoformat(
-                        revision['updated'].replace('Z', '+00:00')
-                    ),
-                )
-                for revision in obj['revisions']
-            ]
-            if 'revisions' in obj
-            else None,
-        )
+        return Secret[Any]._from_dict({'uri': uri_from_juju, **obj})
 
     def ssh(
         self,

@@ -5,9 +5,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import enum
-from typing import Dict, Generic, TypedDict, TypeVar
-
-from typing_extensions import Required
+from typing import Any, Dict, Generic, TypeVar
 
 
 class Rotate(enum.Enum):
@@ -85,6 +83,32 @@ class Secret(Generic[T]):
     revisions: list[Revision] | None
     access: list[Access] | None
 
+    @classmethod
+    def _from_dict(cls, d: dict[str, Any]) -> Secret[T]:
+        return cls(
+            uri=SecretURI('secret:' + d.get('uri', '')),
+            name=d.get('name'),
+            label=d.get('label'),
+            owner=d.get('owner', ''),
+            rotates=datetime.datetime.fromisoformat(d['rotates'].replace('Z', '+00:00'))
+            if 'rotates' in d
+            else None,
+            rotation=d.get('rotation'),
+            revision=d.get('revision', 1),
+            description=d.get('description', ''),
+            created=datetime.datetime.fromisoformat(d['created'].replace('Z', '+00:00')),
+            updated=datetime.datetime.fromisoformat(d['updated'].replace('Z', '+00:00')),
+            content=d.get('content', {}).get('Data', None),
+            checksum=d.get('checksum'),
+            expires=d.get('expires'),
+            access=[Access._from_dict(access) for access in d.get('access', [])]
+            if 'access' in d
+            else None,
+            revisions=[Revision._from_dict(revision) for revision in d.get('revisions', [])]
+            if 'revisions' in d
+            else None,
+        )
+
 
 @dataclasses.dataclass(frozen=True)
 class Revision:
@@ -95,6 +119,15 @@ class Revision:
     created: datetime.datetime
     updated: datetime.datetime
 
+    @classmethod
+    def _from_dict(cls, d: dict[str, Any]) -> Revision:
+        return cls(
+            revision=d['revision'],
+            backend=d['backend'],
+            created=datetime.datetime.fromisoformat(d['created'].replace('Z', '+00:00')),
+            updated=datetime.datetime.fromisoformat(d['updated'].replace('Z', '+00:00')),
+        )
+
 
 @dataclasses.dataclass(frozen=True)
 class Access:
@@ -104,40 +137,10 @@ class Access:
     scope: AccessScope
     role: AccessRole
 
-
-class _SecretResponse(TypedDict, total=False): # pyright: ignore[reportUnusedClass]
-    """TypedDict for secret response that arrives from the juju CLI."""
-
-    uri: SecretURI
-    revision: Required[int]
-    checksum: str
-    expires: str
-    rotation: Rotate
-    rotates: str
-    owner: Required[str]
-    description: str
-    name: str
-    label: str
-    created: Required[str]
-    updated: Required[str]
-    error: str
-    content: dict[str, dict[str, str]]
-    revisions: list[_SecretRevisionResponse]
-    access: list[_SecretAccessResponse]
-
-
-class _SecretRevisionResponse(TypedDict):
-    """TypedDict for revision response that arrives from the juju CLI."""
-
-    revision: int
-    backend: str
-    created: str
-    updated: str
-
-
-class _SecretAccessResponse(TypedDict):
-    """TypedDict for access response that arrives from the juju CLI."""
-
-    target: str
-    scope: str
-    role: str
+    @classmethod
+    def _from_dict(cls, d: dict[str, Any]) -> Access:
+        return cls(
+            target=d['target'],
+            scope=AccessScope(d['scope']),
+            role=AccessRole(d['role']),
+        )
