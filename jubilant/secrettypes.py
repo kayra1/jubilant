@@ -26,7 +26,7 @@ class AccessScope(enum.Enum):
     """Secret access scopes."""
 
     UNIT = 'unit'
-    APPLICATION = 'application'
+    APP = 'application'
     MODEL = 'model'
     RELATION = 'relation'
 
