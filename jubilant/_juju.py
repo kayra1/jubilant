@@ -20,10 +20,10 @@ from .secrettypes import (
     Hidden,
     Revealed,
     Secret,
-    SecretAccess,
-    SecretAccessRole,
-    SecretAccessScope,
-    SecretRevision,
+    Access,
+    AccessRole,
+    AccessScope,
+    Revision,
     SecretURI,
     _SecretResponse,
 )
@@ -963,9 +963,9 @@ class Juju:
             content=obj.get('content', {}).get('Data', None),
             checksum=obj.get('checksum', ''),
             access=[
-                SecretAccess(
-                    role=SecretAccessRole(access.get('role')),
-                    scope=SecretAccessScope(access.get('scope')),
+                Access(
+                    role=AccessRole(access.get('role')),
+                    scope=AccessScope(access.get('scope')),
                     target=access.get('target'),
                 )
                 for access in obj['access']
@@ -973,7 +973,7 @@ class Juju:
             if 'access' in obj
             else None,
             revisions=[
-                SecretRevision(
+                Revision(
                     revision=revision.get('revision', ''),
                     backend=revision.get('backend', ''),
                     created=datetime.datetime.fromisoformat(

@@ -10,7 +10,7 @@ from typing import Dict, Generic, TypedDict, TypeVar
 from typing_extensions import Required
 
 
-class SecretRotateCadence(enum.Enum):
+class Rotate(enum.Enum):
     """Secret rotation policies."""
 
     NEVER = 'never'
@@ -22,7 +22,7 @@ class SecretRotateCadence(enum.Enum):
     YEARLY = 'yearly'
 
 
-class SecretAccessScope(enum.Enum):
+class AccessScope(enum.Enum):
     """Secret access scopes."""
 
     UNIT = 'unit'
@@ -31,7 +31,7 @@ class SecretAccessScope(enum.Enum):
     RELATION = 'relation'
 
 
-class SecretAccessRole(enum.Enum):
+class AccessRole(enum.Enum):
     """Secret access roles."""
 
     VIEW = 'view'
@@ -73,7 +73,7 @@ class Secret(Generic[T]):
     revision: int
     checksum: str | None
     expires: str | None
-    rotation: SecretRotateCadence | None
+    rotation: Rotate | None
     rotates: datetime.datetime | None
     owner: str
     description: str | None
@@ -82,12 +82,12 @@ class Secret(Generic[T]):
     created: datetime.datetime
     updated: datetime.datetime
     content: T
-    revisions: list[SecretRevision] | None
-    access: list[SecretAccess] | None
+    revisions: list[Revision] | None
+    access: list[Access] | None
 
 
 @dataclasses.dataclass(frozen=True)
-class SecretRevision:
+class Revision:
     """Represents a revision of a secret."""
 
     revision: int
@@ -97,12 +97,12 @@ class SecretRevision:
 
 
 @dataclasses.dataclass(frozen=True)
-class SecretAccess:
+class Access:
     """Represents access to a secret."""
 
     target: str
-    scope: SecretAccessScope
-    role: SecretAccessRole
+    scope: AccessScope
+    role: AccessRole
 
 
 class _SecretResponse(TypedDict, total=False): # pyright: ignore[reportUnusedClass]
@@ -112,7 +112,7 @@ class _SecretResponse(TypedDict, total=False): # pyright: ignore[reportUnusedCla
     revision: Required[int]
     checksum: str
     expires: str
-    rotation: SecretRotateCadence
+    rotation: Rotate
     rotates: str
     owner: Required[str]
     description: str
