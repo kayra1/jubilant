@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import enum
-from typing import Any, Dict, Generic, TypeVar
+from typing import Any
 
 
 class Rotate(enum.Enum):
@@ -56,15 +56,8 @@ class SecretURI(str):
         else:
             return str(self)
 
-
-NoneType = type(None)
-Hidden = NoneType
-Revealed = Dict[str, str]
-T = TypeVar('T', Revealed, Hidden)
-
-
 @dataclasses.dataclass(frozen=True)
-class Secret(Generic[T]):
+class Secret:
     """Represents a secret."""
 
     uri: SecretURI
@@ -79,12 +72,11 @@ class Secret(Generic[T]):
     label: str | None
     created: datetime.datetime
     updated: datetime.datetime
-    content: T
     revisions: list[Revision] | None
     access: list[Access] | None
 
     @classmethod
-    def _from_dict(cls, d: dict[str, Any]) -> Secret[T]:
+    def _from_dict(cls, d: dict[str, Any]) -> Secret:
         return cls(
             uri=SecretURI('secret:' + d.get('uri', '')),
             name=d.get('name'),
@@ -98,7 +90,6 @@ class Secret(Generic[T]):
             description=d.get('description', ''),
             created=datetime.datetime.fromisoformat(d['created'].replace('Z', '+00:00')),
             updated=datetime.datetime.fromisoformat(d['updated'].replace('Z', '+00:00')),
-            content=d.get('content', {}).get('Data', None),
             checksum=d.get('checksum'),
             expires=d.get('expires'),
             access=[Access._from_dict(access) for access in d.get('access', [])]
@@ -107,6 +98,20 @@ class Secret(Generic[T]):
             revisions=[Revision._from_dict(revision) for revision in d.get('revisions', [])]
             if 'revisions' in d
             else None,
+        )
+
+@dataclasses.dataclass(frozen=True)
+class RevealedSecret(Secret):
+    """Represents a secret that was revealed, which has a content field that's populated."""
+    content: dict[str, str]
+
+    @classmethod
+    def _from_dict(cls, d: dict[str, Any]) -> RevealedSecret:
+        content: dict[str, str] = d.get('content', {}).get('Data', {})
+        secret = super()._from_dict(d)
+        return cls(
+            content=content,
+            **dataclasses.asdict(secret)
         )
 
 

@@ -59,7 +59,7 @@ def test_show_secret(juju: jubilant.Juju):
     assert secret.description == 'A description.'
     assert secret.created.year == datetime.datetime.now().year
     assert secret.created == secret.updated
-    assert secret.content is None
+    assert not hasattr(secret, 'content')
 
     secret = juju.show_secret('sec1', reveal=True)
     assert secret.content == {'username': 'usr', 'password': 'hunter2'}
@@ -70,7 +70,7 @@ def test_show_secret(juju: jubilant.Juju):
     assert secret.content == {'username': 'usr2', 'password': 'hunter3'}
 
     secret = juju.show_secret('sec2', revisions=True)
-    assert secret.content is None
+    assert not hasattr(secret, 'content')
     assert secret.revisions
     assert len(secret.revisions) == 2
     assert secret.revisions[0].revision == 1

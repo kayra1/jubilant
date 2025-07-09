@@ -15,7 +15,7 @@ from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
 from ._task import Task
-from .secrettypes import Hidden, Revealed, Secret, SecretURI
+from .secrettypes import RevealedSecret, Secret, SecretURI
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -842,7 +842,7 @@ class Juju:
 
         self.cli(*args)
 
-    def secrets(self) -> list[Secret[Hidden]]:
+    def secrets(self) -> list[Secret]:
         """Get all secrets in the model.
 
         Returns:
@@ -851,7 +851,7 @@ class Juju:
         stdout = self.cli('secrets', '--format', 'json')
         output = json.loads(stdout)
         return [
-            Secret[Hidden]._from_dict({'uri': uri_from_juju, **obj})
+            Secret._from_dict({'uri': uri_from_juju, **obj})
             for uri_from_juju, obj in output.items()
         ]
 
@@ -863,7 +863,7 @@ class Juju:
         reveal: Literal[True],
         revision: int | None = None,
         revisions: Literal[False] = False,
-    ) -> Secret[Revealed]: ...
+    ) -> RevealedSecret: ...
 
     @overload
     def show_secret(
@@ -873,7 +873,7 @@ class Juju:
         reveal: Literal[False] = False,
         revision: int | None = None,
         revisions: Literal[False] = False,
-    ) -> Secret[Hidden]: ...
+    ) -> Secret: ...
 
     @overload
     def show_secret(
@@ -883,7 +883,7 @@ class Juju:
         reveal: Literal[False] = False,
         revision: None = None,
         revisions: Literal[True],
-    ) -> Secret[Hidden]: ...
+    ) -> Secret: ...
 
     def show_secret(
         self,
@@ -892,7 +892,7 @@ class Juju:
         reveal: bool = False,
         revision: int | None = None,
         revisions: bool = False,
-    ) -> Secret[Revealed] | Secret[Hidden]:
+    ) -> Secret | RevealedSecret:
         """Get the content of a secret.
 
         Args:
@@ -913,7 +913,10 @@ class Juju:
         stdout = self.cli(*args)
         output = json.loads(stdout)
         uri_from_juju, obj = next(iter(output.items()))
-        return Secret[Any]._from_dict({'uri': uri_from_juju, **obj})
+        secret = {'uri': uri_from_juju, **obj}
+        if reveal:
+            return RevealedSecret._from_dict(secret)
+        return Secret._from_dict(secret)
 
     def ssh(
         self,
