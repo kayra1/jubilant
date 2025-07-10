@@ -848,7 +848,7 @@ class Juju:
             owner: The owner of the secrets to retrieve.
 
         Returns:
-            A list of :class:`Secret` objects, one for each secret in the model.
+            A list of all secrets in the model.
         """
         args = ['secrets']
         if owner is not None:
@@ -904,7 +904,7 @@ class Juju:
             identifier: Name or URI of the secret to return.
             reveal: Whether to reveal the secret content.
             revisions: Whether to include all revisions of the secret. Mutually
-                exclusive with `reveal` and `revision`.
+                exclusive with *reveal* and *revision*.
             revision: Revision number of the secret to reveal. If not specified,
                 the latest revision is revealed.
         """

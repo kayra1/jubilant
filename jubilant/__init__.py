@@ -17,13 +17,14 @@ from ._all_any import (
 from ._juju import CLIError, ConfigValue, Juju, WaitError
 from ._task import Task, TaskError
 from ._test_helpers import temp_model
-from .secrettypes import Secret, SecretURI
+from .secrettypes import RevealedSecret, Secret, SecretURI
 from .statustypes import Status
 
 __all__ = [
     'CLIError',
     'ConfigValue',
     'Juju',
+    'RevealedSecret',
     'Secret',
     'SecretURI',
     'Status',
