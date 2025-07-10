@@ -28,7 +28,7 @@ def test_new_info(run: mocks.Run, file: mocks.File):
             'update-secret',
             'my-secret',
             '--info',
-            '"a new description"',
+            'a new description',
             '--file',
             file.name,
         ]
@@ -54,7 +54,7 @@ def test_all_options(run: mocks.Run, file: mocks.File):
             '--name',
             'credentials',
             '--info',
-            '"a new description"',
+            'a new description',
             '--auto-prune',
             '--file',
             file.name,

@@ -142,7 +142,7 @@ class Juju:
         """
         args = ['add-secret', name]
         if info is not None:
-            args.extend(['--info', f'"{info}"'])
+            args.extend(['--info', info])
 
         with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
             _yaml.safe_dump(content, file)
@@ -1014,7 +1014,7 @@ class Juju:
         if name is not None:
             args.extend(['--name', name])
         if info is not None:
-            args.extend(['--info', f'"{info}"'])
+            args.extend(['--info', info])
         if auto_prune:
             args.append('--auto-prune')
 
