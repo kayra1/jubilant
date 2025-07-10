@@ -311,7 +311,7 @@ class Juju:
         Args:
             charm: Name of charm or bundle to deploy, or path to a local file (must start with
                 ``/`` or ``.``).
-            app: Optional application name within the model. Defaults to the charm name.
+            app: Custom application name within the model. Defaults to the charm name.
             attach_storage: Existing storage(s) to attach to the deployed unit, for example,
                 ``foo/0`` or ``mydisk/1``. Not available for Kubernetes models.
             base: The base on which to deploy, for example, ``ubuntu@22.04``.
@@ -758,7 +758,7 @@ class Juju:
             unit: Name of unit to run the action on, for example ``mysql/0`` or
                 ``mysql/leader``.
             action: Name of action to run.
-            params: Optional named parameters to pass to the action.
+            params: Named parameters to pass to the action.
             wait: Maximum time to wait for action to finish; :class:`TimeoutError` is raised if
                 this is reached. Default is to wait indefinitely.
 
