@@ -4,37 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-import enum
 from typing import Any
-
-
-class Rotate(enum.Enum):
-    """Secret rotation policies."""
-
-    NEVER = 'never'
-    HOURLY = 'hourly'
-    DAILY = 'daily'
-    WEEKLY = 'weekly'
-    MONTHLY = 'monthly'
-    QUARTERLY = 'quarterly'
-    YEARLY = 'yearly'
-
-
-class AccessScope(enum.Enum):
-    """Secret access scopes."""
-
-    UNIT = 'unit'
-    APP = 'application'
-    MODEL = 'model'
-    RELATION = 'relation'
-
-
-class AccessRole(enum.Enum):
-    """Secret access roles."""
-
-    VIEW = 'view'
-    ROTATE = 'rotate'
-    MANAGE = 'manage'
 
 
 class SecretURI(str):
@@ -65,7 +35,7 @@ class Secret:
     revision: int
     checksum: str | None
     expires: str | None
-    rotation: Rotate | None
+    rotation: str | None
     rotates: datetime.datetime | None
     owner: str
     description: str | None
@@ -139,15 +109,15 @@ class Access:
     """Represents access to a secret."""
 
     target: str
-    scope: AccessScope
-    role: AccessRole
+    scope: str
+    role: str
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> Access:
         return cls(
             target=d['target'],
-            scope=AccessScope(d['scope']),
-            role=AccessRole(d['role']),
+            scope=d['scope'],
+            role=d['role'],
         )
 
 def _datetime_from_iso(dt: str) -> datetime.datetime:
