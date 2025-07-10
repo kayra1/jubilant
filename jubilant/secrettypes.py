@@ -56,6 +56,7 @@ class SecretURI(str):
         else:
             return str(self)
 
+
 @dataclasses.dataclass(frozen=True)
 class Secret:
     """Represents a secret."""
@@ -77,7 +78,7 @@ class Secret:
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> Secret:
-        return cls(
+        return Secret(
             uri=SecretURI('secret:' + d.get('uri', '')),
             name=d.get('name'),
             label=d.get('label'),
@@ -100,19 +101,18 @@ class Secret:
             else None,
         )
 
+
 @dataclasses.dataclass(frozen=True)
 class RevealedSecret(Secret):
     """Represents a secret that was revealed, which has a content field that's populated."""
+
     content: dict[str, str]
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> RevealedSecret:
         content: dict[str, str] = d.get('content', {}).get('Data', {})
         secret = super()._from_dict(d)
-        return cls(
-            content=content,
-            **dataclasses.asdict(secret)
-        )
+        return RevealedSecret(content=content, **dataclasses.asdict(secret))
 
 
 @dataclasses.dataclass(frozen=True)
