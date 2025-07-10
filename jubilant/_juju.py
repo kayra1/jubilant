@@ -142,7 +142,7 @@ class Juju:
         """
         args = ['add-secret', name]
         if info is not None:
-            args.extend(['--info', info])
+            args.extend(['--info', f'"{info}"'])
 
         with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
             _yaml.safe_dump(content, file)
@@ -781,7 +781,6 @@ class Juju:
             ) as params_file:
                 _yaml.safe_dump(params, params_file)
             args.extend(['--params', params_file.name])
-
         try:
             try:
                 stdout, stderr = self._cli(*args)
@@ -842,13 +841,19 @@ class Juju:
 
         self.cli(*args)
 
-    def secrets(self) -> list[Secret]:
+    def secrets(self, *, owner: str | None = None) -> list[Secret]:
         """Get all secrets in the model.
 
+        Args:
+            owner: The owner of the secrets to retrieve.
+
         Returns:
-            A list of :class:`Secret[Hidden]` objects, one for each secret in the model.
+            A list of :class:`Secret` objects, one for each secret in the model.
         """
-        stdout = self.cli('secrets', '--format', 'json')
+        args = ['secrets']
+        if owner is not None:
+            args.extend(['--owner', owner])
+        stdout = self.cli(*args, '--format', 'json')
         output = json.loads(stdout)
         return [
             Secret._from_dict({'uri': uri_from_juju, **obj})
@@ -1009,7 +1014,7 @@ class Juju:
         if name is not None:
             args.extend(['--name', name])
         if info is not None:
-            args.extend(['--info', info])
+            args.extend(['--info', f'"{info}"'])
         if auto_prune:
             args.append('--auto-prune')
 
