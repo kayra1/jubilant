@@ -83,14 +83,14 @@ class Secret:
             name=d.get('name'),
             label=d.get('label'),
             owner=d.get('owner', ''),
-            rotates=datetime.datetime.fromisoformat(d['rotates'].replace('Z', '+00:00'))
+            rotates=_datetime_from_iso(d['rotates'])
             if 'rotates' in d
             else None,
             rotation=d.get('rotation'),
             revision=d.get('revision', 1),
-            description=d.get('description', ''),
-            created=datetime.datetime.fromisoformat(d['created'].replace('Z', '+00:00')),
-            updated=datetime.datetime.fromisoformat(d['updated'].replace('Z', '+00:00')),
+            description=d.get('description'),
+            created=_datetime_from_iso(d['created']),
+            updated=_datetime_from_iso(d['updated']),
             checksum=d.get('checksum'),
             expires=d.get('expires'),
             access=[Access._from_dict(access) for access in d.get('access', [])]
@@ -129,8 +129,8 @@ class Revision:
         return cls(
             revision=d['revision'],
             backend=d['backend'],
-            created=datetime.datetime.fromisoformat(d['created'].replace('Z', '+00:00')),
-            updated=datetime.datetime.fromisoformat(d['updated'].replace('Z', '+00:00')),
+            created=_datetime_from_iso(d['created']),
+            updated=_datetime_from_iso(d['updated']),
         )
 
 
@@ -149,3 +149,7 @@ class Access:
             scope=AccessScope(d['scope']),
             role=AccessRole(d['role']),
         )
+
+def _datetime_from_iso(dt: str) -> datetime.datetime:
+    """Converts a Juju-specific ISO 8601 string to a datetime object."""
+    return datetime.datetime.fromisoformat(dt.replace('Z', '+00:00'))
