@@ -53,9 +53,7 @@ class Secret:
             name=d.get('name'),
             label=d.get('label'),
             owner=d.get('owner', ''),
-            rotates=_datetime_from_iso(d['rotates'])
-            if 'rotates' in d
-            else None,
+            rotates=_datetime_from_iso(d['rotates']) if 'rotates' in d else None,
             rotation=d.get('rotation'),
             revision=d.get('revision', 1),
             description=d.get('description'),
@@ -119,6 +117,7 @@ class Access:
             scope=d['scope'],
             role=d['role'],
         )
+
 
 def _datetime_from_iso(dt: str) -> datetime.datetime:
     """Converts a Juju-specific ISO 8601 string to a datetime object."""
