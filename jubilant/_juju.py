@@ -686,8 +686,8 @@ class Juju:
         """Remove a secret from the model.
 
         Args:
-            identifier: The URI of the secret to remove.
-            revision: The revision of the secret to remove.
+            identifier: The name or URI of the secret to remove.
+            revision: The revision of the secret to remove. If not specified, remove all revisions.
         """
         args = ['remove-secret', identifier]
         if revision is not None:
@@ -896,7 +896,7 @@ class Juju:
         """Get the content of a secret.
 
         Args:
-            identifier: Name or URI of the secret to reveal.
+            identifier: Name or URI of the secret to return.
             reveal: Whether to reveal the secret content.
             revisions: Whether to include all revisions of the secret. Mutually
                 exclusive with `reveal` and `revision`.
@@ -998,7 +998,7 @@ class Juju:
         """Update the content of a secret.
 
         Args:
-            identifier: The name or the secret uri for the secret.
+            identifier: The name or URI of the secret to update.
             content: Key-value pairs that represent the secret content, for example
                 ``{'password': 'hunter2'}``.
             info: New description for the secret.
