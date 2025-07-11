@@ -33,7 +33,6 @@ class Secret:
 
     uri: SecretURI
     revision: int
-    checksum: str | None
     expires: str | None
     rotation: str | None
     rotates: datetime.datetime | None
@@ -59,7 +58,6 @@ class Secret:
             description=d.get('description'),
             created=_datetime_from_iso(d['created']),
             updated=_datetime_from_iso(d['updated']),
-            checksum=d.get('checksum'),
             expires=d.get('expires'),
             access=[Access._from_dict(access) for access in d.get('access', [])]
             if 'access' in d
@@ -74,13 +72,16 @@ class Secret:
 class RevealedSecret(Secret):
     """Represents a secret that was revealed, which has a content field that's populated."""
 
+    checksum: str
     content: dict[str, str]
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> RevealedSecret:
         content: dict[str, str] = d.get('content', {}).get('Data', {})
         secret = super()._from_dict(d)
-        return RevealedSecret(content=content, **dataclasses.asdict(secret))
+        return RevealedSecret(
+            content=content, checksum=d.get('checksum', ''), **dataclasses.asdict(secret)
+        )
 
 
 @dataclasses.dataclass(frozen=True)

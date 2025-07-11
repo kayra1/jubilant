@@ -17,8 +17,8 @@ def test_get_secret(run: mocks.Run):
         stdout=json.dumps(SINGLE_SECRET),
     )
     juju = jubilant.Juju()
-
     response = juju.show_secret('example-charm-secret')
+
     uri = next(iter(SINGLE_SECRET.keys()))
     secret = SINGLE_SECRET.get(uri)
     assert secret
@@ -32,7 +32,6 @@ def test_get_secret(run: mocks.Run):
     assert response.revision == secret.get('revision')
     assert response.description == secret.get('description')
     assert response.created.year == response.updated.year
-    assert response.checksum == secret.get('checksum')
     assert response.expires == secret.get('expires')
     assert response.access is None
     assert response.revisions is None
@@ -44,10 +43,15 @@ def test_get_secret_with_reveal(run: mocks.Run):
         stdout=json.dumps(SINGLE_SECRET_REVEALED),
     )
     juju = jubilant.Juju()
-
     response = juju.show_secret('example-charm-secret', reveal=True)
+
+    uri = next(iter(SINGLE_SECRET_REVEALED.keys()))
+    secret = SINGLE_SECRET_REVEALED.get(uri)
+    assert secret
+
     assert hasattr(response, 'content')
     assert response.content == {'password': 'secret', 'username': 'admin'}
+    assert response.checksum == secret.get('checksum')
 
 
 def test_get_secret_with_revisions(run: mocks.Run):
