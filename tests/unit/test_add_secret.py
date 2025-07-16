@@ -11,8 +11,9 @@ def test_normal(run: mocks.Run, file: mocks.File):
     )
     juju = jubilant.Juju()
 
-    juju.add_secret('my-secret', {'username': 'admin'})
+    secret_uri = juju.add_secret('my-secret', {'username': 'admin'})
 
+    assert secret_uri.startswith('secret:')
     assert len(file.write_log) == 1
     assert file.write_log[0] == 'username: admin\n'
 

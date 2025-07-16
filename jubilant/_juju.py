@@ -903,10 +903,10 @@ class Juju:
         Args:
             identifier: Name or URI of the secret to return.
             reveal: Whether to reveal the secret content.
-            revisions: Whether to include all revisions of the secret. Mutually
-                exclusive with *reveal* and *revision*.
             revision: Revision number of the secret to reveal. If not specified,
                 the latest revision is revealed.
+            revisions: Whether to include all revisions of the secret. Mutually
+                exclusive with *reveal* and *revision*.
         """
         args = ['show-secret', identifier, '--format', 'json']
         if reveal:
@@ -1011,10 +1011,10 @@ class Juju:
             auto_prune: automatically remove revisions that are no longer tracked by any observers.
         """
         args = ['update-secret', identifier]
-        if name is not None:
-            args.extend(['--name', name])
         if info is not None:
             args.extend(['--info', info])
+        if name is not None:
+            args.extend(['--name', name])
         if auto_prune:
             args.append('--auto-prune')
 

@@ -48,23 +48,20 @@ class Secret:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> Secret:
         return Secret(
-            uri=SecretURI('secret:' + d.get('uri', '')),
+            uri=SecretURI('secret:' + d['uri']),
             name=d.get('name'),
             label=d.get('label'),
-            owner=d.get('owner', ''),
+            owner=d['owner'],
             rotates=_datetime_from_iso(d['rotates']) if 'rotates' in d else None,
             rotation=d.get('rotation'),
-            revision=d.get('revision', 1),
+            revision=d['revision'],
             description=d.get('description'),
             created=_datetime_from_iso(d['created']),
             updated=_datetime_from_iso(d['updated']),
             expires=d.get('expires'),
-            access=[Access._from_dict(access) for access in d.get('access', [])]
-            if 'access' in d
-            else None,
+            access=[Access._from_dict(access) for access in d.get('access', [])] or None,
             revisions=[Revision._from_dict(revision) for revision in d.get('revisions', [])]
-            if 'revisions' in d
-            else None,
+            or None,
         )
 
 
@@ -77,11 +74,8 @@ class RevealedSecret(Secret):
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> RevealedSecret:
-        content: dict[str, str] = d.get('content', {}).get('Data', {})
-        secret = super()._from_dict(d)
-        return RevealedSecret(
-            content=content, checksum=d.get('checksum', ''), **dataclasses.asdict(secret)
-        )
+        kwargs = dataclasses.asdict(super()._from_dict(d))
+        return RevealedSecret(content=d['content']['Data'], checksum=d['checksum'], **kwargs)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -113,11 +107,7 @@ class Access:
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> Access:
-        return cls(
-            target=d['target'],
-            scope=d['scope'],
-            role=d['role'],
-        )
+        return cls(target=d['target'], scope=d['scope'], role=d['role'])
 
 
 def _datetime_from_iso(dt: str) -> datetime.datetime:
