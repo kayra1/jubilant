@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import jubilant
 import pytest
+
+import jubilant
 
 
 def test_init_defaults():
