@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import jubilant
+import pytest
 
 
 def test_init_defaults():
@@ -46,13 +47,15 @@ def test_method_order():
     assert sorted_by_lines == sorted_by_alpha, 'Please keep Juju methods in alphabetical order'
 
 
-def test_snap_tempdir():
+def test_snap_tempdir(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('jubilant.Juju._juju_is_snap', False)
     juju = jubilant.Juju(cli_binary='/bin/juju')
 
     assert 'snap' not in juju._temp_dir
 
 
-def test_regular_tempdir():
+def test_regular_tempdir(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('jubilant.Juju._juju_is_snap', True)
     juju = jubilant.Juju(cli_binary='/snap/bin/juju')
 
     assert 'snap' in juju._temp_dir
