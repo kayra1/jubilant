@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import json
 import logging
@@ -11,7 +12,6 @@ import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Mapping
-from contextlib import nullcontext
 from typing import Any, Literal, Union, overload
 
 from . import _pretty, _yaml
@@ -850,7 +850,7 @@ class Juju:
         with (
             tempfile.NamedTemporaryFile('w+', dir=self._temp_dir)
             if params is not None
-            else nullcontext()
+            else contextlib.nullcontext()
         ) as params_file:
             if params_file is not None:
                 _yaml.safe_dump(params, params_file)
