@@ -852,6 +852,7 @@ class Juju:
             if params is not None
             else contextlib.nullcontext()
         ) as params_file:
+            # params_file is defined when params is not None
             if params_file is not None:
                 _yaml.safe_dump(params, params_file)
                 params_file.flush()
