@@ -45,10 +45,12 @@ def test_method_order():
     sorted_by_lines = sorted(method_linenos, key=lambda k: method_linenos[k])
     assert sorted_by_lines == sorted_by_alpha, 'Please keep Juju methods in alphabetical order'
 
+
 def test_snap_tempdir():
     juju = jubilant.Juju(cli_binary='/bin/juju')
 
     assert 'snap' not in juju._temp_dir
+
 
 def test_regular_tempdir():
     juju = jubilant.Juju(cli_binary='/snap/bin/juju')
