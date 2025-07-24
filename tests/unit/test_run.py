@@ -178,5 +178,5 @@ def test_params(run: mocks.Run, mock_file: mocks.NamedTemporaryFile):
         results={'username': 'user', 'password': 'pass'},
     )
     assert task.success
-    assert yaml.safe_load(mock_file.writes[0]) == {'foo': 1, 'bar': ['ab', 'cd']}
+    assert yaml.safe_load('\n'.join(mock_file.writes)) == {'foo': 1, 'bar': ['ab', 'cd']}
     assert mock_file.num_flushes == 1
